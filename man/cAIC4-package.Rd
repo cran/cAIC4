@@ -8,7 +8,7 @@ Conditional Akaike information criterion for lme4
 
 \description{
 Provides functions for the estimation of the conditional Akaike 
-information in Generalized Mixed-effects models fitted with (g)lmer 
+information in generalized mixed-effects models fitted with (g)lmer 
 form lme4.
 }
 
@@ -16,16 +16,14 @@ form lme4.
 \tabular{ll}{
 Package: \tab cAIC\cr
 Type: \tab Package\cr
-Version: \tab 0.1\cr
+Version: \tab 0.2\cr
 Date: \tab 2014-05-23\cr
 License: \tab GPL (>=2)\cr
 }
 }
 
 \author{
-Benjamin Saefken, David Ruegamer
-
-based on the work of Thomas Kneib and Sonja Greven.
+Benjamin Saefken, David Ruegamer, Thomas Kneib and Sonja Greven.
 
 Maintainer: Benjamin Saefken <bsaefke@uni-goettingen.de>
 }

@@ -1,5 +1,5 @@
 bcMer <-
-function(mer, method = NULL, B = NULL) {
+function(mer, method = NULL, B = NULL, sigma.estimated = TRUE, analytic = TRUE) {
   # A function that calls the bias correction functions.
   #
   # Args: 
@@ -27,7 +27,7 @@ function(mer, method = NULL, B = NULL) {
             bc <- biasCorrectionPoisson(mer)
           },
           gaussian = {
-            bc <- biasCorrectionGaussian(mer)
+            bc <- biasCorrectionGaussian(mer, sigma.estimated, analytic)
           },
           {
             cat("For this family no bias correction is currently available \n")
@@ -44,7 +44,7 @@ function(mer, method = NULL, B = NULL) {
               bc <- biasCorrectionPoisson(mer)
             },
             gaussian = {
-              bc <- biasCorrectionGaussian(mer)
+              bc <- biasCorrectionGaussian(mer, sigma.estimated, analytic)
             },
             {
               cat("For this family no bias correction is currently available \n")

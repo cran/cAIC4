@@ -1,10 +1,14 @@
 getModelComponents <-
-function(m) { 
+function(m, analytic) { 
   # A function that calculates all components needed to calculate the bias
   # correction as in Greven & Kneib (2010)
   #
   # Args: 
   #   m     = Object of class lmerMod. Obtained by lmer()
+  #   analytic = FALSE if the numeric hessian of the (restricted) marginal log-
+  #              likelihood from the lmer optimization procedure should be used.
+  #              Otherwise (default) TRUE, i.e. use a analytical version that 
+  #              has to be computed.
   #
   # Returns:
   #   model = List of components needed to calculate the bias correction
@@ -56,8 +60,12 @@ function(m) {
   model$Lambda  <- Lambda 
   model$Lambdat <- Lambdat
   model$V0inv   <- V0inv
-  model$A       <- A   
-  model$B       <- matrix(0, length(theta), length(theta))   
+  model$A       <- A
+  if(analytic) {
+    model$B     <- matrix(0, length(theta), length(theta)) 
+  } else {
+    model$B     <- m@optinfo$derivs$Hessian  
+  }
   model$C       <- matrix(0, length(theta), n)   
   model$y       <- y   
   model$e       <- e  

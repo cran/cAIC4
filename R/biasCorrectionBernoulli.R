@@ -12,7 +12,6 @@ function(object) {
   #   BC     = (Asymptotic) bias correction (i.e. degrees of freedom) for a 
   #            (generalized) linear mixed model with binary response.
   #  
-  warning("The Steinian typ estimator for binary data is not an unbiased estimator!")
   y                   <- object@resp$y
 	signCor             <- - 2 * y + 1
   mu                  <- object@resp$mu

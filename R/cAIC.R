@@ -1,5 +1,5 @@
 cAIC <-
-function(object, method = NULL, B = NULL) {
+function(object, method = NULL, B = NULL, sigma.estimated = TRUE, analytic = TRUE) {
   # A function that calls the bias correction functions.
   #
   # Args: 
@@ -11,6 +11,12 @@ function(object, method = NULL, B = NULL) {
   #            "steinian" only available for Gaussian, Poisson and Bernoulli.
   #   B      = Number of Bootstrap replications. Default is NULL then it is 
   #            chosen as maximum of the number of observations and 100.
+  #   sigma.estimated = If sigma is estimated. This only is used for the 
+  #                     analytical version of Gaussian responses.
+  #   analytic = FALSE if the numeric hessian of the (restricted) marginal log-
+  #              likelihood from the lmer optimization procedure should be used.
+  #              Otherwise (default) TRUE, i.e. use a analytical version that 
+  #              has to be computed.
   #
   # Returns:
   #   list   = The list contains the conditional log-likelihood; the estimated 
@@ -19,8 +25,8 @@ function(object, method = NULL, B = NULL) {
   #            model was fitted; the conditional Akaike information, caic.
   #
   if (any(names(object) == "mer")) {
-    warning("Treat with care: gamm4 models are not sufficiently tested!") 
     object <- object$mer
+    object@optinfo$gamm4 <- TRUE    # add indicator for gamm4
   }
   
   if (!inherits(object, c("lmerMod", "glmerMod"))) {
@@ -33,7 +39,11 @@ function(object, method = NULL, B = NULL) {
     method <- "conditionalBootstrap"
   }
   
-  dfList   <- bcMer(object , method = method, B = B)
+  dfList   <- bcMer(object , 
+                    method = method, 
+                    B = B, 
+                    sigma.estimated = sigma.estimated,
+                    analytic = analytic)
   if (mode(dfList) == "list") {
     bc       <- dfList$bc
     newModel <- dfList$newModel
@@ -48,7 +58,7 @@ function(object, method = NULL, B = NULL) {
   caic <- - 2 * cll + 2 * bc
   return(list(loglikelihood = cll, 
               df            = bc, 
-              newModel      = newModel, 
+              reducedModel  = newModel, 
               new           = new, 
               caic          = caic))
 }

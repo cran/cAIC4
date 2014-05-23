@@ -18,7 +18,7 @@ models based on a fit via the \code{gamm4}-package can be estimated.
 }
 
 \usage{
-cAIC(object, method = NULL, B = NULL)
+cAIC(object, method = NULL, B = NULL, sigma.estimated = TRUE, analytic = TRUE)
 }
 
 %- maybe also 'usage' for other objects documented here.
@@ -42,6 +42,16 @@ conditional Bootstrap.
 Number of Bootstrap replications. The default is \code{NULL}. Then B is the 
 minimum of 100 and the length of the response vector. 
 }
+  \item{sigma.estimated}{
+If sigma is estimated. Only used for the analytical version of Gaussian 
+responses.
+}
+  \item{analytic}{
+FALSE if the numeric hessian of the (restricted) marginal log-likelihood from 
+the lmer optimization procedure should be used. Otherwise (default) TRUE, i.e. 
+use a analytical version that has to be computed. Only used for the analytical 
+version of Gaussian responses.
+}
 }
 
 \details{
@@ -50,15 +60,16 @@ analytic representation of the corrected conditional AIC in Greven and Kneib
 (2010). This is based on a the Stein formula and uses implicit differentiation 
 to calculate the derivative of the random effects covariance parameters w.r.t. 
 the data. The code is adapted form the one provided in the supplementary 
-material of the paper by Greven and Kneib (2010). Although the inverse of the 
-matrix B from Theorem 3 in that paper is not explicitly calculated. Instead a 
-Cholesky decomposition of the (actually positive definite) matrix B is used, in 
-order to increase stability and speed. Furthermore the model needs to be checked 
-if a random effects covariance parameter has an optimum on the boundary. And if 
-so the model needs to be refitted without the these parameters. This is also 
-done by the function and the refitted model is also returned. Notice that the 
-\code{boundary.tol} argument in \code{\link[lme4]{lmerControl}} has an impact on 
-whether a parameter is estimated to lie on the boundary of the parameter space. 
+material of the paper by Greven and Kneib (2010). The supplied 
+\code{\link[lme4]{merMod}} model needs to be checked if a random effects 
+covariance parameter has an optimum on the boundary, i.e. is zero. And if so the 
+model needs to be refitted with the according random effect terms omitted. This 
+is also done by the function and the refitted model is also returned. Notice 
+that the \code{boundary.tol} argument in \code{\link[lme4]{lmerControl}} has an 
+impact on whether a parameter is estimated to lie on the boundary of the 
+parameter space. For estimated error variance an the degrees of freedom are 
+increased by one. If this should not be done set \code{sigma.estimated = 
+"FALSE"}.
 
 If the object is of class \code{\link[lme4]{merMod}} and has \code{family = 
 "poisson"} there is also an analytic representation of the conditional AIC based 
@@ -128,7 +139,7 @@ b <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 
 cAIC(b)
 
-b2 <- lmer(Reaction ~ (1 | Days) + (1 | Subject), sleepstudy)
+b2 <- lmer(Reaction ~ (1 | Days) + (1 | Subject), sleepstudy, analytic = FALSE)
 
 cAIC(b2)
 
