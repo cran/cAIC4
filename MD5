@@ -1,0 +1,15 @@
+a3c7403397ca56d0526d8d586024fb2f *DESCRIPTION
+80dd8ccfae001f71dadcd52dce9b7291 *NAMESPACE
+ce92650c171a751ecb946ca99dd68566 *R/bcMer.R
+2029d019611e9794fc7ae7c591b3724e *R/biasCorrectionBernoulli.R
+3a04150fafcb70440f319a982bb3e571 *R/biasCorrectionGaussian.R
+386f7a68a32e40c63579f1ccffed6e27 *R/biasCorrectionPoisson.R
+0d470a9832f865142650f60823146c0c *R/cAIC.R
+35899c6b1f39d463333813467e328682 *R/calculateGaussianBc.R
+cb4ac10d61b099eaab37048dfae95204 *R/cnms2formula.R
+4e119e6638ed7bdca6b66c8ef91168a0 *R/conditionalBootstrap.R
+11d5b7867baaa9ff8cc889de20b53691 *R/deleteZeroComponents.R
+38bdc680b3d0eb86518d4a0a776c4bc4 *R/getModelComponents.R
+3648159161e17c05ddcc2b46e0483325 *R/getcondLL.R
+0accbb7bf9a527aa77b3d88665837a26 *man/cAIC.Rd
+da371cc9c5898fa1adf57730e81bb663 *man/cAIC4-package.Rd

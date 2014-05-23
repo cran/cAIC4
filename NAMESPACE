@@ -1,0 +1,4 @@
+import(Matrix)
+import(lme4)
+import(methods)
+export("cAIC")
