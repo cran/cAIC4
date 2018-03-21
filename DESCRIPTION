@@ -1,17 +1,19 @@
 Package: cAIC4
 Type: Package
-Title: Conditional Akaike information criterion for lme4
-Version: 0.2
-Date: 2014-05-23
-Author: Benjamin Saefken and David Ruegamer, with contributions from Sonja Greven and Thomas Kneib
-Maintainer: Benjamin Saefken <bsaefke@uni-goettingen.de>
-Depends: lme4(>= 1.1-6), methods, Matrix
-Suggests: gamm4
-Description: Provides functions for the estimation of the conditional Akaike 
-			 information in generalized mixed-effects models fitted with (g)lmer 
-			 form lme4.
+Title: Conditional Akaike Information Criterion for 'lme4'
+Version: 0.3
+Date: 2018-03-15
+Author: Benjamin Saefken and David Ruegamer, with contributions from Sonja
+    Greven and Thomas Kneib
+Maintainer: David Ruegamer <david.ruegamer@gmail.com>
+Depends: lme4(>= 1.1-6), methods, Matrix, stats4
+Suggests: gamm4, mgcv
+Description: Provides functions for the estimation of the conditional Akaike
+    information in generalized mixed-effect models fitted with (g)lmer() 
+    from 'lme4'.
 License: GPL (>= 2)
-Packaged: 2014-08-12 09:13:26 UTC; bsaefken
+Packaged: 2018-03-19 21:44:01 UTC; david
 NeedsCompilation: no
+Date/Publication: 2018-03-21 09:06:21 UTC
+RoxygenNote: 6.0.1
 Repository: CRAN
-Date/Publication: 2014-08-12 11:48:10

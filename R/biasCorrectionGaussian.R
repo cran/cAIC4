@@ -16,7 +16,7 @@ function(m, sigma.estimated, analytic) {
   #
   zeroLessModel <- deleteZeroComponents(m)
   if (inherits(zeroLessModel, "lm")) {
-    return(ncol(model.matrix(zeroLessModel)))
+    return(zeroLessModel$rank)
   }
   model <- getModelComponents(zeroLessModel, analytic)
   if (identical(m, zeroLessModel)) {
