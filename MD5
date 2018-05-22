@@ -1,5 +1,5 @@
-edd0ddd8cebc76e166c4e89745a33d44 *DESCRIPTION
-b04f4abddc1fe6d5c946fd86f555138c *NAMESPACE
+ab03cdac9d81ecaaa61aca4326d8fd8c *DESCRIPTION
+b72923904b58e23b3dc94cdba366f179 *NAMESPACE
 05db00d1ef2a31434be8a6eb541bad9e *R/bcMer.R
 07125b93fc4cacd732f1ccdce8957296 *R/biasCorrectionBernoulli.R
 620ae468b66d33a906ca18d8e6e2578a *R/biasCorrectionGaussian.R
@@ -13,11 +13,12 @@ f80bf0cbd941daa328d851e2cb4825f8 *R/deleteZeroComponents.R
 eb8408e153c6daf1aca9775f45660125 *R/getModelComponents.R
 57fac52c6999a41de16491ede6d4d5c3 *R/getcondLL.R
 88ba1657000106f6fda86a8bcc44d0b2 *R/helperfuns_stepcAIC.R
-7864be2fa22c2a54061b9bed858d9d0e *R/stepcAIC.R
+10952199e553fa41e3338a1841753887 *R/stepcAIC.R
+dc2fa602face39733407d668297a9b68 *build/partial.rdb
 5cbd836e100488674ffeec6acf25232e *data/guWahbaData.rda
-24d2215c34caae374fd10769ebef34f9 *inst/CITATION
+d5a8be2af27cb201934e9b68dac30504 *inst/CITATION
 737e36b07cc1320e1a1a1b2f62268f91 *man/cAIC.Rd
-881b7a9b1694cb2ebd5fdaa78664fd10 *man/cAIC4-package.Rd
+96be7a6081541e0cc41e2948e17a43c1 *man/cAIC4-package.Rd
 3d6353fbe964f2b6bb0259de5b5e3b51 *man/deleteZeroComponents.Rd
 7e574f01693da10d9f40505e21412bae *man/getcondLL.Rd
 ae827575eb9bf990a65c9a7487868dcb *man/guWahbaData.Rd
