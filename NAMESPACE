@@ -6,6 +6,7 @@ importFrom("stats", sigma)
 } else {
 importFrom("lme4", sigma)
 }
+export(anocAIC)
 export(cAIC)
 export(deleteZeroComponents)
 export(getcondLL)

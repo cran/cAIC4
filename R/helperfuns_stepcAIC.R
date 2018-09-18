@@ -90,7 +90,7 @@ backwardGam <- function(intGam, keep)
 ### purpose: reduce complexity of model
 
 
-backwardStep <- function(cnms, keep)
+backwardStep <- function(cnms, keep, allowCorrelationSel)
 {
   
   if( (sum(sapply(cnms,length))==1# & !isGam
@@ -123,27 +123,27 @@ backwardStep <- function(cnms, keep)
     }
   } 
   
-  newCnms <- lapply(listCnms,function(c){
+  newCnms <- lapply(listCnms,function(d){
     
-    if(length(c)<=1){
+    if(length(d)<=1){
       
-      #       if(names(c)%in%names(keep)){
-      #         keep[names(c)]
+      #       if(names(d)%in%names(keep)){
+      #         keep[names(d)]
       #       }else{
       list(NA)
       #       }
       
     }else{
       
-      for(i in 1:length(c)){
+      for(i in 1:length(d)){
         
-        c[[i]] <- c[[i]][-i]  
+        d[[i]] <- d[[i]][-i]  
         
       }
-      #       if(names(c)%in%names(keep)){
-      #         append(c,keep[names(c)])
+      #       if(names(d)%in%names(keep)){
+      #         append(d,keep[names(d)])
       #       }else{
-      c
+      d
       #       }
       
     }
@@ -177,7 +177,11 @@ backwardStep <- function(cnms, keep)
     
   }
   
-  listOfAllCombs <- split(unlist(listOfAllCombs,recursive=FALSE),rep(1:length(newCnms),each=length(cnms)))
+  notempty <- sapply(listOfAllCombs, function(x) length(x[[1]])>0)
+  listOfAllCombs <- listOfAllCombs[notempty]
+  newCnms <- newCnms[notempty]
+  listOfAllCombs <- suppressWarnings(split(unlist(listOfAllCombs,recursive=FALSE),
+                                           rep(1:length(newCnms),each=length(cnms))))
   listOfAllCombs <- lapply(listOfAllCombs,checkREs)
   
   listOfAllCombs <- listOfAllCombs[sapply(listOfAllCombs,function(r)!is.null(r))]
@@ -190,7 +194,7 @@ backwardStep <- function(cnms, keep)
   #                           cnms[order(names(cnms))]))
   #   ))
   #   ]
-  
+  if(!allowCorrelationSel) listOfAllCombs <- removeUncor(listOfAllCombs)
   
   return(listOfAllCombs)
 }
@@ -206,6 +210,7 @@ calculateAllCAICs <- function(newSetup,
                               numCores, 
                               data, 
                               calcNonOptimMod, 
+                              nrmods,
                               ...)
 {
   
@@ -224,7 +229,7 @@ calculateAllCAICs <- function(newSetup,
   ################### calculate alle the cAICs ##########################
   #######################################################################
   
-  listOfCAICs <- tryCatch(mclapply(listOfModels,function(m){
+  listOfCAICs <- mclapply(listOfModels,function(m){
     
     # if(any(class(m)%in%c("glm","lm"))){
     #   
@@ -234,11 +239,17 @@ calculateAllCAICs <- function(newSetup,
     #   c(ll,bc,caic)
     #   
     # }else{
-      
+
       if(length(class(m))==1 && class(m)=="list"){ # m is a gamm4 object
         
-        cAIC(m,...)[c("loglikelihood","df","caic")]
-        
+        tryCatch(cAIC(m,...)[c("loglikelihood","df","caic", "new")], 
+                 error = function(e){ 
+                   
+                   ret <- c(NA,NA,NA,NA)
+                   attr(ret, "message") <- e
+                   return(ret)
+                   
+                 })
         
       }else{
         
@@ -249,14 +260,28 @@ calculateAllCAICs <- function(newSetup,
           
         }
         
-        tryCatch(cAIC(m,...)[c("loglikelihood","df","caic")], error = function(e) return(c(NA,NA,NA)))
+        tryCatch(cAIC(m,...)[c("loglikelihood","df","caic","new")], 
+                 error = function(e){ 
+                   
+                   ret <- c(NA,NA,NA)
+                   attr(ret, "message") <- e
+                   return(ret)
+                   
+                   })
         
       }
-      
     # }
-    }, mc.cores=numCores),error=function(e)return(e))
+    }, mc.cores=numCores)
   
-  if(!is.null(listOfCAICs$message)) return(listOfCAICs) else listOfCAICs <- lapply(listOfCAICs,unlist)
+  if(all(sapply(listOfCAICs, function(x) is.na(sum(unlist(x))))))
+  {
+    listOfCAICs$message <- attr(listOfCAICs[[1]],"message")
+    return(listOfCAICs)
+  }
+  # if(all(sapply(listOfCAICs, is.list))
+  #    all(sapply(listOfCAICs, function(x) !is.null(x$message))))
+  #   return(listOfCAICs) else 
+  listOfCAICs <- lapply(listOfCAICs,unlist)
   
   #######################################################################
   ################ list all the cAICs and models ########################
@@ -264,14 +289,18 @@ calculateAllCAICs <- function(newSetup,
   
   
   aicTab <- as.data.frame(as.matrix(do.call("rbind",listOfCAICs)))
-  colnames(aicTab) <- c("loglikelihood","df","caic")
+  colnames(aicTab) <- c("cll","df","caic","refit")
   aicTab$models <- sapply(formulaList, makePrint, initial=FALSE)
   
-  aicTab <- as.data.frame(aicTab[,c("models","loglikelihood","df","caic")])
+  aicTab <- as.data.frame(aicTab[,c("models","cll","df","caic","refit")])
   
-  minInd <- which.min(aicTab$caic)
+  minInd <- order(aicTab$caic, decreasing = FALSE)
   bestMod <- NA
-  if(length(minInd)!=0) bestMod <- listOfModels[[minInd]]
+  if(length(minInd)!=0){ 
+    bestMod <- listOfModels[minInd[1:(min(nrmods,length(minInd)))]]
+    attr(bestMod, "caic") <- sort(aicTab$caic, decreasing = FALSE)[
+      1:(min(nrmods,length(minInd)))]
+  }
   
   return(list(aicTab=aicTab,
               bestMod=bestMod)
@@ -405,7 +434,7 @@ cnmsConverter <- function(cnms)
   
   for(i in 1:length(cnms)){
     
-    if ("(Intercept)"%in%cnms[[i]][1]) {
+    if ("(Intercept)"%in%cnms[[i]]) {
       cnms[[i]][which(cnms[[i]]=="(Intercept)")] <- "1"
     }else{
       cnms[[i]] <- append(cnms[[i]],"0")
@@ -437,9 +466,9 @@ forwardGam <- function(intGam, fixEfCandidates=NULL, bsType="ps", keep)
   vars <- intGam$fake.names
   sTerm <- vars%in%sapply(intGam$smooth.spec,function(x)x$term)
   nonS <- vars[!sTerm]
-  haveS <- vars[sTerm] # should be at least of lenght = 1 , else a (g)lmer should be fitted
+  haveS <- vars[sTerm] # should be at least of length 1 , else a (g)lmer should be fitted
   sLabs <- makeS(intGam)
-  keepNonS <- NULL
+  keepNonS <- vars[!(vars %in% fixEfCandidates)]
   
   newX <- fixEfCandidates[which(!fixEfCandidates %in% vars)]
   
@@ -450,11 +479,11 @@ forwardGam <- function(intGam, fixEfCandidates=NULL, bsType="ps", keep)
     keepSterm <- keepVars%in%sapply(keep$smooth.spec,function(x)x$term)
     keepNonS <- keepVars[!keepSterm]
     
-    nonS <- nonS[!nonS%in%keepNonS] # drop the keepNonS from nonS
-    # to prevent s-making
-    if(length(nonS)==0) nonS <- NULL
-    
   }
+
+  nonS <- nonS[!nonS%in%keepNonS] # drop the keepNonS from nonS
+  # to prevent s-making
+  if(length(nonS)==0) nonS <- NULL
   
   returnListS <- vector("list",length=length(nonS)+length(newX)) 
   
@@ -466,7 +495,7 @@ forwardGam <- function(intGam, fixEfCandidates=NULL, bsType="ps", keep)
       
     }else{
       
-      returnListS[[i]] <- c(keepNonS,sLabs, 
+      returnListS[[i]] <- c(keepNonS,sLabs,nonS[-(i-length(newX))],
                             paste0("s(",nonS[i-length(newX)],
                                    ",bs=",deparse(bsType),")"))
       
@@ -487,7 +516,8 @@ forwardStep <- function(cnms,
                         slopeCandidates,
                         groupCandidates,
                         nrOfCombs,
-                        allowUseAcross
+                        allowUseAcross,
+                        allowCorrelationSel
                         )
 {
   
@@ -516,8 +546,11 @@ forwardStep <- function(cnms,
   
   allCombs <- lapply(X=1:length(reList),function(i)append(cnms,reList[i]))
   allCombs <- lapply(allCombs,checkREs)
+  if(!allowCorrelationSel) allCombs <- allCombs[
+    sapply(allCombs,function(x) 
+      length(unique(names(x))) == length(x))]
   allCombs <- allCombs[!duplicated(allCombs)]
-  allCombs <- allCombs[!(sapply(allCombs,function(x)all.equal(x,cnms))=="TRUE")]
+  allCombs <- allCombs[!(sapply(allCombs,function(x)all.equal(x,lapply(cnms,sort)))=="TRUE")]
   
   if(length(allCombs)==0) return(NULL)
   
@@ -525,9 +558,81 @@ forwardStep <- function(cnms,
   allCombs <- lapply(allCombs,function(t)t[order(names(t))])
   allCombs <- allCombs[!(duplicated(allCombs) & duplicated(lapply(allCombs,names)))]
   
+  # also allow for correlation parameter to be selected?
+  if(!allowCorrelationSel) allCombs <- removeUncor(allCombs)
+  
+  # only allow for REs, which are one variable larger than the current one
+  allCombs <- allCombs[!sapply(allCombs, function(r){
+    
+    any(sapply(1:length(r), function(i){
+      
+      if(!names(r)[i] %in% names(cnms)){
+        
+        length(r[[i]]) > 1
+        
+      }else{
+        
+        length(r[[i]]) > length(cnms[[names(r)[i]]]) + 1
+        
+      }
+      
+    }))
+    
+  })]
+  
+  if(length(allCombs)==0) return(NULL)
+  
   return(#list(randomPart=
     allCombs#, sPart=...)
   )
+  
+}
+
+#######################################################################################
+### removeUncor function
+### purpose:  removes random effects with uncorrelated intercept and slope
+
+removeUncor <- function(res)
+{
+  
+  # keep <- sapply(res, function(re){
+  #   
+  #   length(re) == 1 | 
+  #     (all(unlist(sapply(re, function(x) 
+  #       any(grepl("(Intercept)", x, fixed=T))))))
+  #   
+  # })
+  
+  drop <- sapply(res, function(re){
+    
+    reL <- split(re, names(re))
+    dropPerName <- sapply(reL, function(rel)
+    {
+      if(length(rel) > 1){ 
+        ints <- sapply(rel, function(x) any(grepl("(Intercept)", x, fixed=T)))
+        noints <- sapply(rel, function(x) any(!grepl("(Intercept)", x, fixed=T)))
+        return(ints & noints)
+      }else return(FALSE)
+    })
+    any(dropPerName)
+    
+  })
+  
+  # res <- res[keep]
+  # check for several random intercepts with different slopes
+  # drop <- sapply(res, function(re){
+  #   
+  #   reL <- split(re, names(re))
+  #   dropPerName <- sapply(reL, function(rel)
+  #   {
+  #   if(length(rel) > 1){ 
+  #     ints <- sapply(rel, function(x) any(grepl("(Intercept)", x, fixed=T)))
+  #   }else FALSE
+  #   })
+  #   any(dropPerName)
+  #   
+  # })
+  return(res[!drop])
   
 }
 
@@ -667,7 +772,7 @@ interpret.random <- function(frla)
 ### makeBackward function
 ### purpose:  
 
-makeBackward <- function(comps, keep)
+makeBackward <- function(comps, keep, allowCorrelationSel)
 {
   
   # comps   list created by getComponents
@@ -675,7 +780,8 @@ makeBackward <- function(comps, keep)
   returnListRE <- returnListS <- NULL
   
   returnListRE <- if(!is.null(comps$random)) 
-    backwardStep(comps$random, keep=keep$random)
+    backwardStep(comps$random, keep=keep$random, 
+                 allowCorrelationSel=allowCorrelationSel)
   
   returnListS <- if(!is.null(comps$gamPart) && comps$gamPart$fake.formula[[3]]!=1) 
     backwardGam(comps$gamPart, keep=keep$fixed)
@@ -787,7 +893,8 @@ makeForward <- function(comps,
                         allowUseAcross,
                         fixEfCandidates, 
                         bsType,
-                        keep)
+                        keep,
+                        allowCorrelationSel)
 {
   
   returnListRE <- returnListS <- NULL
@@ -810,7 +917,7 @@ makeForward <- function(comps,
     returnListRE <- if(!is.null(slopeCandidates) | !is.null(groupCandidates) | 
                        length(comps$random)>1 | allowUseAcross) 
       forwardStep(cnms=comps$random, slopeCandidates, groupCandidates, 
-                  nrOfCombs, allowUseAcross)
+                  nrOfCombs, allowUseAcross, allowCorrelationSel)
     
   }
   
@@ -1032,5 +1139,21 @@ mergeChanges <- function(initialParts, listParts)
     is.logical(all.equal(r, list(random=orgRE,gamPart=orgS))))]
   
   return(resList)
+  
+}
+
+
+#######################################################################################
+### duplicatedMers function
+### purpose: get the duplicated merMod models in a list of models
+duplicatedMers <- function(listModels)
+{
+  
+  duplicated(sapply(listModels, function(x){
+    if(class(x)[1]=="list") 
+      as.character(Reduce(paste,deparse(formula(x$mer)))) else 
+        as.character(Reduce(paste,deparse(formula(x))))
+  }))
+  
   
 }

@@ -28,9 +28,10 @@
 #' log-likelihood from the lmer optimization procedure should be used.
 #' Otherwise (default) TRUE, i.e.  use a analytical version that has to be
 #' computed. Only used for the analytical version of Gaussian responses.
-#' @return A list consisting of: 1. the conditional log likelihood, i.e. the
-#' log likelihood with the random effects as penalized parameters; 2. the
-#' estimated degrees of freedom; 3. a list element that is either \code{NULL}
+#' @return A \code{cAIC} object, which is a list consisting of: 
+#' 1. the conditional log likelihood, i.e. the log likelihood with the random 
+#' effects as penalized parameters; 2. the estimated degrees of freedom; 
+#' 3. a list element that is either \code{NULL}
 #' if no new model was fitted otherwise the new (reduced) model, see details;
 #' 4. a boolean variable indicating whether a new model was fitted or not; 5.
 #' the estimator of the conditional Akaike information, i.e. minus twice the
@@ -82,7 +83,7 @@
 #' For models with no random effects, i.e. (g)lms, the \code{\link{cAIC}}
 #' function returns the AIC of the model with scale parameter estimated by REML.
 #' 
-#' @author David Ruegamer \email{david.ruegamer@gmail.com}
+#' @author Benjamin Saefken, David Ruegamer
 #' @seealso \code{\link[lme4]{lme4-package}}, \code{\link[lme4]{lmer}},
 #' \code{\link[lme4]{glmer}}
 #' @references 
@@ -201,7 +202,7 @@ function(object, method = NULL, B = NULL, sigma.estimated = TRUE, analytic = TRU
     p <- object$rank
     sigma <- ifelse("glm" %in% class(object),
                     sqrt(summary(object)$dispersion),
-                    summary(object)$sigma * n / (n-p))  
+                    summary(object)$sigma * sqrt((n-p) / n))  
     
     switch(family(object)$family, binomial = {
       cll <- sum(dbinom(x = y, size = length(unique(y)) - 1, prob = mu, log = TRUE))
@@ -214,11 +215,13 @@ function(object, method = NULL, B = NULL, sigma.estimated = TRUE, analytic = TRU
       cll <- NA
     })
     
-    return(list(loglikelihood = as.numeric(cll), 
-                df            = object$rank, 
+    retobj <-  list(loglikelihood = as.numeric(cll), 
+                df            = object$rank + 1, 
                 reducedModel  = NA, 
-                new           = NA, 
-                caic          = -2 * as.numeric(cll) + 2 * (object$rank)))
+                new           = FALSE, 
+                caic          = -2 * as.numeric(cll) + 2 * (object$rank + 1))
+    class(retobj) <- c("cAIC")
+    return(retobj)
   }
   
   if (!inherits(object, c("lmerMod", "glmerMod"))) {
@@ -246,11 +249,14 @@ function(object, method = NULL, B = NULL, sigma.estimated = TRUE, analytic = TRU
     new      <- FALSE
   }
   
-  cll  <- getcondLL(object)
+  if(new) cll <- getcondLL(newModel) else
+    cll  <- getcondLL(object)
   caic <- - 2 * cll + 2 * bc
-  return(list(loglikelihood = cll, 
-              df            = bc, 
-              reducedModel  = newModel, 
-              new           = new, 
-              caic          = caic))
+  retobj <- list(loglikelihood = cll, 
+                 df            = bc, 
+                 reducedModel  = newModel, 
+                 new           = new, 
+                 caic          = caic)
+  class(retobj) <- c("cAIC")
+  return(retobj)
 }

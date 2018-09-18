@@ -6,38 +6,49 @@
 #' The step function searches the space of possible models in a greedy manner,
 #' where the direction of the search is specified by the argument
 #' direction. If direction = "forward" / = "backward", 
-#' the function adds / exludes random effects until the cAIC can't be improved.
+#' the function adds / exludes random effects until the cAIC can't be improved further.
 #' In the case of forward-selection, either a new grouping structure, new
-#' slopes for the random effects or new \code{s()}-terms must be supplied to the function call.
+#' slopes for the random effects or new covariates modeled nonparameterically 
+#' must be supplied to the function call.
 #' If direction = "both", the greedy search is alternating between forward
 #' and backward steps, where the direction is changed after each step
 #'
-#'@param object fit by \code{[lme4]{lmer}}, \code{[lme4]{glmer}} or \code{[gamm4]{gamm4}} 
-#'for which the stepwise procedure is to be computed
-#'@param groupCandidates see slopeCandidates. Group nesting must be initiated manually, i.e. by 
+#'@param object object returned by \code{[lme4]{lmer}}, \code{[lme4]{glmer}} or \code{[gamm4]{gamm4}} 
+#'@param numberOfSavedModels integer defining how many additional models to be saved
+#'during the step procedure. If \code{1} (DEFAULT), only the best model is returned. 
+#'Any number \code{k} greater \code{1} will return the \code{k} best models. 
+#'If \code{0}, all models will be returned (not recommended for larger applications).
+#'@param groupCandidates character vector containing names of possible grouping variables for 
+#'new random effects. Group nesting must be specified manually, i.e. by 
 #'listing up the string of the groups in the manner of lme4. For example \code{groupCandidates = c("a", "b", "a/b")}.   
-#'@param slopeCandidates character vectors containing names of possible new random effect groups / slopes
+#'@param slopeCandidates character vector containing names of possible new random effects
 #'@param fixEfCandidates character vector containing names of possible (non-)linear fixed effects in the GAMM; 
 #'NULL for the (g)lmer-use case 
-#'@param direction character vector indicating the direction in c("both","backward","forward")
-#'@param numberOfPermissibleSlopes how much slopes are permissible for one group RE
-#'@param trace logical; should information ne printed during the running of stepcAIC?
+#'@param direction character vector indicating the direction ("both","backward","forward")
+#'@param numberOfPermissibleSlopes how much slopes are permissible for one grouping variable
+#'@param trace logical; should information be printed during the execution of stepcAIC?
 #'@param steps maximum number of steps to be considered
 #'@param keep list($fixed,$random) of formulae; which splines / fixed (fixed) or random effects (random) to be 
-#'kept during selection must be included in the original model 
-#'@param numCores the number of cores to be used in calculations; this is done by using \code{parallel::mclapply}
-#'@param data data.frame, from which the new REs are to be taken
+#'kept during selection; specified terms must be included in the original model 
+#'@param numCores the number of cores to be used in calculations; 
+#'parallelization is done by using \code{parallel::mclapply}
+#'@param data data.frame supplying the data used in \code{object}. \code{data} must also include 
+#'variables, which are considered for forward updates.
 #'@param returnResult logical; whether to return the result (best model and corresponding cAIC)
 #'@param calcNonOptimMod logical; if FALSE, models which failed to converge are not considered for cAIC calculation
-#'@param bsType type of splines to consider in forward gamm4 steps
+#'@param bsType type of splines to be used in forward gamm4 steps
 #'@param allowUseAcross allow slopes to be used in other grouping variables
-#'@param ... options for cAIC call
+#'@param allowCorrelationSel logical; FALSE does not allow correlations of random effects to be (de-)selected (default)
+#'@param digits number of digits used in printing the results
+#'@param printValues what values of \code{c("cll", "df", "caic", "refit")} to print in the table of comparisons
+#'@param ... further options for cAIC call
 #'@section Details: 
-#' For use with "gamm4-objects": 
-#' groupCandidates are interpreted as covariables and fitted as splines.
-#' If groupCandidates does include characters such as "s(..,bs='tp')" 
-#' the respective spline is included in the forward stepwise procedure.
-#' @return if \code{returnResult} is \code{TRUE}, a list with the best model \code{finalModel} and
+#' 
+#' Note that the method can not handle mixed models with uncorrelated random effects and does NOT
+#' reduce models to such, i.e., the model with \code{(1 + s | g)} is either reduced to
+#' \code{(1 | g)} or \code{(0 + s | g)} but not to \code{(1 + s || g)}.
+#' @return if \code{returnResult} is \code{TRUE}, a list with the best model \code{finalModel},
+#' \code{additionalModels} if \code{numberOfSavedModels} was specified and
 #' the corresponding cAIC \code{bestCAIC} is returned. 
 #' 
 #' Note that if \code{trace} is set to \code{FALSE} and \code{returnResult}
@@ -149,20 +160,24 @@
 #' }
 #' 
 stepcAIC <- function(object, 
-                     groupCandidates=NULL,
-                     slopeCandidates=NULL,
-                     fixEfCandidates=NULL,
-                     numberOfPermissibleSlopes=2,
-                     allowUseAcross=FALSE,
+                     numberOfSavedModels = 1,
+                     groupCandidates = NULL,
+                     slopeCandidates = NULL,
+                     fixEfCandidates = NULL,
+                     numberOfPermissibleSlopes = 2,
+                     allowUseAcross = FALSE,
+                     allowCorrelationSel = FALSE,
                      direction = "backward",
                      trace = FALSE,
                      steps = 50, 
                      keep = NULL,
                      numCores = 1,
                      data = NULL,
-                     returnResult=TRUE,
-                     calcNonOptimMod=TRUE,
-                     bsType="tp",
+                     returnResult = TRUE,
+                     calcNonOptimMod = TRUE,
+                     bsType = "tp",
+                     digits = 2,
+                     printValues = "caic",
                      ...)
 {
 
@@ -174,7 +189,7 @@ stepcAIC <- function(object,
   if(!is.null(data)){
     data <- get(deparse(substitute(data)), envir = parent.frame())
   }else if(inherits(object, c("lmerMod", "glmerMod"))){
-    data <- get(deparse(substitute(object@call[["data"]])), envir = parent.frame())
+    data <- get(deparse(object@call[["data"]]), envir = parent.frame())
   }else{
     stop("argument data must be supplied!")
   }
@@ -227,6 +242,20 @@ stepcAIC <- function(object,
     
   }
   
+  if(!returnResult & numberOfSavedModels != 1)
+    warning("No result will be returned if returnResult==FALSE.")
+  
+  # define everything needed to save further models
+  if(numberOfSavedModels==1) additionalModels <- NULL else{
+    additionalModels <- list()
+    additionalCaics <- c()
+  }
+  if(numberOfSavedModels==0) numberOfSavedModels <- Inf
+  
+  if(numberOfPermissibleSlopes < 1) 
+    stop("numberOfPermissibleSlopes must be greater or equal to 1")
+  # redefine numberOfPermissibleSlopes as intercepts will also count as slopes
+  numberOfPermissibleSlopes <- numberOfPermissibleSlopes + 1
   
   #######################################################################
   ##########################   entry step   #############################
@@ -237,15 +266,20 @@ stepcAIC <- function(object,
   if(inherits(object, c("lmerMod", "glmerMod")) | "mer"%in%names(object)){
       
     timeBefore <- Sys.time()
-    cAICofMod <- tryCatch(cAIC(object,...)$caic, error = function(e){
+    cAICofMod <- tryCatch(cAIC(object,...), error = function(e){
       
       cat("\n\nThe cAIC of the initial model can not be calculated. Continue Anyway?")
       readline("If so, type 'y': ")
       
     })
-    if(!is.numeric(cAICofMod) && cAICofMod=="y"){ 
+    if(!is.numeric(cAICofMod$caic) && cAICofMod=="y"){ 
       cAICofMod <- Inf 
-      }else if(!is.numeric(cAICofMod) && cAICofMod!="y") return(NULL)
+      }else if(!is.numeric(cAICofMod$caic) && cAICofMod!="y") return(NULL)
+    
+    refit <- cAICofMod$new
+    # if(refit==1 & inherits(object, c("lmerMod", "glmerMod")))
+    #   object <- cAICofMod$reducedModel
+    cAICofMod <- cAICofMod$caic
     
     timeForCalc <- Sys.time() - timeBefore
 
@@ -266,7 +300,7 @@ stepcAIC <- function(object,
 
   # check if call is inherently consistent
   
-  stopifnot( 
+  if(!( 
     
     direction=="backward" | 
       
@@ -276,7 +310,8 @@ stepcAIC <- function(object,
       ( direction %in% c("forward","both") & 
           is.null(groupCandidates) & is.null(slopeCandidates) & is.null(fixEfCandidates) &
           ( allowUseAcross | existsNonS ) ) 
-  )
+  ))
+    stop("Can not make forward steps without knowledge of additional random effect covariates.")
   
   if( direction=="backward" & !( is.null(groupCandidates) & is.null(slopeCandidates) & is.null(fixEfCandidates) )
       ) warning("I will ignoring variables in group- / slopeCandidates or fixEfCandidates for backward selection.")
@@ -330,23 +365,6 @@ stepcAIC <- function(object,
     # get all components needed for stepping procedure
     comps <- getComponents(object)
 
-    ########################### printing ##############################
-    
-    if(trace) {
-    
-      cat("\nStep ",stepsInit-steps+1," (",direction,"):  cAIC=", format(round(cAICofMod, 4)), "\n", 
-            "Best model so far: ", makePrint(object), "\n",
-          "New Candidates:\n\n",
-          sep = "")
-      utils::flush.console()
-    
-    }
-    
-    ###################################################################
-    
-  
-    steps = steps - 1
-      
     newSetup <- if(direction=="forward"){
       
                        makeForward(comps=comps,
@@ -355,14 +373,48 @@ stepcAIC <- function(object,
                                    fixEfCandidates=fixEfCandidates,
                                    nrOfCombs=numberOfPermissibleSlopes,
                                    allowUseAcross=allowUseAcross,
+                                   allowCorrelationSel=allowCorrelationSel,
                                    bsType=bsType,
                                    keep=keep)
     }else{
       
       makeBackward(comps=comps,
-                   keep=keep)
+                   keep=keep,
+                   allowCorrelationSel=allowCorrelationSel)
       
     }
+    
+    if(all(sapply(newSetup, is.null)) & direction=="forward")
+    {
+      
+      cat("\nBest model: ", makePrint(object), "\ncAIC:", 
+          cAICofMod, "\n_____________________________________________\n")
+      # cat("\nModel can not be further extended.")
+      
+      if(refit==1) cat("\nBest model should be refitted due to zero variance components.\n")
+      
+      return(list(finalModel=object,
+                  additionalModels=NULL,
+                  bestCAIC=cAICofMod)
+      )
+      
+    }
+    
+    ########################### printing ##############################
+    
+    if(trace) {
+      
+      cat("\nStep ",stepsInit-steps+1," (",direction,"):  cAIC=", format(round(cAICofMod, 4)), "\n", 
+          "Best model so far:\n", makePrint(object), "\n", sep = "")
+      utils::flush.console()
+      
+    }
+    
+    ###################################################################
+    
+    steps = steps - 1
+    
+    cat("New Candidates:\n\n")
     
     newSetup <- mergeChanges(initialParts=comps, listParts=newSetup)
     
@@ -370,7 +422,7 @@ stepcAIC <- function(object,
     
     if(trace & !is.null(newSetup)) cat("Calculating cAIC for", 
                                        length(newSetup),
-                                       "model(s) ...")
+                                       "model(s) ...\n")
     
     #############
     
@@ -383,6 +435,7 @@ stepcAIC <- function(object,
                                         numCores=numCores,
                                         data=data,
                                         calcNonOptimMod=calcNonOptimMod,
+                                        nrmods=numberOfSavedModels,
                                         ...)
                       
     }
@@ -395,7 +448,8 @@ stepcAIC <- function(object,
       
       if(returnResult){
         return(list(finalModel=object,
-                    bestCAIC=NA)
+                    additionalModels=additionalModels,
+                    bestCAIC=cAICofMod)
         )
       }else{
         return(invisible(NULL))
@@ -413,15 +467,39 @@ stepcAIC <- function(object,
     
     if (trace) {
       cat("\r\r\r\r\r\r\r\r\r\r\r\r\r")
-      print(aicTab[with(aicTab,order(-caic)), ], row.names = FALSE)
+      print(aicTab[with(aicTab,order(-caic)), c("models",printValues)], 
+            row.names = FALSE, digits = digits)
       cat("\n_____________________________________________\n")
       cat("_____________________________________________\n")
       utils::flush.console()
     }
     
-    bestModel <- tempRes$bestMod
+    caicsres <- attr(tempRes$bestMod, "caic")
+    bestModel <- tempRes$bestMod[[which.min(caicsres)]]
+    
+    if(numberOfSavedModels > 1 & length(tempRes$bestMod) > 0){ 
+      
+      additionalModels <- c(additionalModels, tempRes$bestMod)
+      
+      # check for duplicates among models
+      duplicates <- duplicatedMers(additionalModels)
+      
+      # remove duplicates
+      additionalModels <- additionalModels[!duplicates]
+      additionalCaics <- c(additionalCaics, caicsres)[!duplicates]
+      
+      bestCaics <- order(additionalCaics, decreasing = FALSE)[
+        1:min(numberOfSavedModels, length(additionalCaics))
+        ]
+      
+      additionalModels <- additionalModels[bestCaics]
+      additionalCaics <- additionalCaics[bestCaics]
+
+    }
     indexMinCAIC <- which.min(aicTab$caic)
     minCAIC <- ifelse(length(indexMinCAIC)==0, Inf, aicTab$caic[indexMinCAIC]) 
+    if(minCAIC < cAICofMod) refit <- tempRes$aicTab[indexMinCAIC,"refit"]
+    
     keepList <- list(random=interpret.random(keep$random),gamPart=NULL)
     if(!is.null(keep$fixed)) keepList$gamPart <- mgcv::interpret.gam(keep$fixed)
 
@@ -448,7 +526,8 @@ stepcAIC <- function(object,
       
     }else if(
       
-        ( minCAIC <= cAICofMod & !dirWasBoth & direction=="backward" & any(class(bestModel)%in%c("glm","lm")) ) 
+        ( minCAIC <= cAICofMod & !dirWasBoth & direction=="backward" & 
+          any(class(bestModel)%in%c("glm","lm")) ) 
         # if backward step procedure reached (g)lm
       
       |
@@ -483,6 +562,15 @@ stepcAIC <- function(object,
         
       }
       
+    }else if( minCAIC <= cAICofMod & equalToLastStep & improvementInBoth ){
+     
+      # there is another best model
+      cAICofMod <- minCAIC
+      object <- bestModel
+      improvementInBoth <- FALSE
+      if(dirWasBoth)  direction <- ifelse( direction=="forward", "backward", "forward" )
+       
+      
     }else if( minCAIC > cAICofMod & ( steps==0 | length(newSetup)==1 ) & !dirWasBoth ){
         
       # if there is no better model, but all the required steps were done or
@@ -509,7 +597,7 @@ stepcAIC <- function(object,
       # but the last step did not yield better performance or the last step had an equal cAIC
       
       stepsOver <- TRUE
-      bestModel <- object
+      if(refit==0) bestModel <- object
       minCAIC <- cAICofMod
       
     }
@@ -526,15 +614,22 @@ stepcAIC <- function(object,
     
   }else{
     
-    cat("\nBest model: ", makePrint(bestModel),
-        ", cAIC:",minCAIC,"\n_____________________________________________\n")
+    cat("\nBest model:\n", makePrint(bestModel),",\n",
+        "cAIC:", minCAIC, "\n_____________________________________________\n")
+    
+    #if(refit==1) cat("\nBest model should be refitted due to zero variance components.\n")
     
   }
   
   
    
   if(returnResult){
+    if(!is.null(additionalModels)){ 
+      additionalModels <- additionalModels[-1]
+      attr(additionalModels, "cAICs") <- additionalCaics[-1]
+    }
     return(list(finalModel=bestModel,
+                additionalModels=additionalModels,
                 bestCAIC=minCAIC)
     )
   }else{

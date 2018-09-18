@@ -32,9 +32,10 @@ Otherwise (default) TRUE, i.e.  use a analytical version that has to be
 computed. Only used for the analytical version of Gaussian responses.}
 }
 \value{
-A list consisting of: 1. the conditional log likelihood, i.e. the
-log likelihood with the random effects as penalized parameters; 2. the
-estimated degrees of freedom; 3. a list element that is either \code{NULL}
+A \code{cAIC} object, which is a list consisting of: 
+1. the conditional log likelihood, i.e. the log likelihood with the random 
+effects as penalized parameters; 2. the estimated degrees of freedom; 
+3. a list element that is either \code{NULL}
 if no new model was fitted otherwise the new (reduced) model, see details;
 4. a boolean variable indicating whether a new model was fitted or not; 5.
 the estimator of the conditional Akaike information, i.e. minus twice the
@@ -170,6 +171,6 @@ Efron , B. (2004) The estimation of prediction error. J. Amer. Statist. Ass.
 \code{\link[lme4]{glmer}}
 }
 \author{
-David Ruegamer \email{david.ruegamer@gmail.com}
+Benjamin Saefken, David Ruegamer
 }
 \keyword{regression}

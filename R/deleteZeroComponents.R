@@ -64,7 +64,7 @@ function(m) {
   if(exists("gamm4", m@optinfo)) {  # for gamm4 what to exclude from the model
     for(i in 1:length(varBlockMatrices)){
       if(any(diag(varBlockMatrices[[i]]) == 0)) {
-         termWithZero <- cnms[i][which(diag(varBlockMatrices[[i]]) == 0)]
+         termWithZero <- cnms[[i]][which(diag(varBlockMatrices[[i]]) == 0)]
          cat("The term", ifelse(termWithZero=="(Intercept)",names(termWithZero),termWithZero[[1]]), 
           "has zero variance components. \n")
       }
@@ -73,18 +73,19 @@ function(m) {
           the model cAIC can be called again.", call. = FALSE)
   }
 
-  if(is.null(m@optinfo$conv$lme4$code)) {
+  # if(is.null(m@optinfo$conv$lme4$code) || 
+  #    m@optinfo$conv$lme4$code == -1) {
     for(i in 1:length(varBlockMatrices)){
       cnms[[i]] <- cnms[[i]][which(diag(varBlockMatrices[[i]]) != 0)]
     }
-  } else {    # in case of convergence failures
-    nc  <- vapply(cnms, length, 1L)
-    thl <- split(theta, rep.int(seq_along(nc), (nc * (nc + 1))/2))
-    for (i in 1:length(nc)) {
-      ranVars   <- thl[[i]][1:nc[i]]
-      cnms[[i]] <- cnms[[i]][which(ranVars != 0)] 
-    }    
-  }
+  # } else {    # in case of convergence failures
+  #   nc  <- vapply(cnms, length, 1L)
+  #   thl <- split(theta, rep.int(seq_along(nc), (nc * (nc + 1))/2))
+  #   for (i in 1:length(nc)) {
+  #     ranVars   <- thl[[i]][1:nc[i]]
+  #     cnms[[i]] <- cnms[[i]][which(ranVars != 0)] 
+  #   }    
+  # }
   
   reFormula  <- cnms2formula(cnms)
   if(suppressWarnings(nobars(formula(m)) == formula(m)[[2]])) {  # if there are no fixed effects 
@@ -95,6 +96,6 @@ function(m) {
   lhs        <- formula(m)[[2]]  # left hand side of the formula
   newFormula <- reformulate(rhs, lhs)  # merge both sides           
   newMod     <- update(m, formula. = newFormula, evaluate = TRUE)
-  
+
   return(deleteZeroComponents(newMod))
 }
