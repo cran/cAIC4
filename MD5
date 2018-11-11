@@ -1,4 +1,4 @@
-08ba682bd73ead71ff9ff59cdaec3f93 *DESCRIPTION
+17aab2ea2cdebc5f95c5fb81b2a5cd72 *DESCRIPTION
 498a966194e9bfe83d32b2f3f905e5d8 *NAMESPACE
 05db00d1ef2a31434be8a6eb541bad9e *R/bcMer.R
 3230079a76bda1707a211917cbe732b5 *R/biasCorrectionBernoulli.R
@@ -7,15 +7,15 @@ d3db7769501791811db8b88f8a184cb8 *R/biasCorrectionPoisson.R
 30cb0469e81e058e9869059aee42a025 *R/cAIC.R
 641d456389071cf82d48fa0cad11f067 *R/calculateGaussianBc.R
 5faacee6a5e322ce0a91eb33bfc26384 *R/cnms2formula.R
-f1d92b46a97f597bd502eea469c0fa4f *R/conditionalBootstrap.R
+cd8405a10a2df3ed4efe0813ecb3e1c2 *R/conditionalBootstrap.R
 a1a88d18e70e8699b40b73cb09f5e65b *R/datasets.R
 3fe5622ffbd80c132396fe798da20220 *R/deleteZeroComponents.R
 b94fc70abb1b6ef68f60916ae4539fe9 *R/getModelComponents.R
 57fac52c6999a41de16491ede6d4d5c3 *R/getcondLL.R
-6c151a4a660476a0103c3f6df08353bf *R/helperfuns_stepcAIC.R
+2bbdd8924ccae1ef67e495f67c8032de *R/helperfuns_stepcAIC.R
 ed08858340edf520379c0a0abff2456d *R/methods.R
-8bd4df2d10f6476c02097fe88be2be69 *R/stepcAIC.R
-6f723e70134731f8007c7eb24b0ec738 *build/partial.rdb
+9b559edc8fce1082f6fb0158b9aaa680 *R/stepcAIC.R
+7dee70a59b9b6dd9fc1657b536f5eb49 *build/partial.rdb
 da1dfda39466d076694af799d95ebc9a *data/Zambia.RData
 5cbd836e100488674ffeec6acf25232e *data/guWahbaData.rda
 d5a8be2af27cb201934e9b68dac30504 *inst/CITATION
