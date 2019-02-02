@@ -90,7 +90,7 @@ backwardGam <- function(intGam, keep)
 ### purpose: reduce complexity of model
 
 
-backwardStep <- function(cnms, keep, allowCorrelationSel)
+backwardStep <- function(cnms, keep, allowCorrelationSel, allowNoIntercept)
 {
   
   if( (sum(sapply(cnms,length))==1# & !isGam
@@ -195,7 +195,8 @@ backwardStep <- function(cnms, keep, allowCorrelationSel)
   #   ))
   #   ]
   if(!allowCorrelationSel) listOfAllCombs <- removeUncor(listOfAllCombs)
-  
+  if(!allowNoIntercept) listOfAllCombs <- removeNoInt(listOfAllCombs)
+
   return(listOfAllCombs)
 }
 
@@ -636,6 +637,34 @@ removeUncor <- function(res)
   
 }
 
+### removeNoInt function
+### purpose:  removes random effects with no random intercept
+
+removeNoInt <- function(res)
+{
+  
+  hasInt = function(x) grepl("(Intercept)",x,fixed=TRUE)
+  
+  for(i in 1:length(res)){
+    
+    namresi = names(res[[i]])
+    
+    for(j in 1:length(namresi)){
+    
+      resForThisGroup <- unlist(res[[i]][namresi[j]])
+      # remove RE without intercept
+      if(!hasInt(resForThisGroup)) res[[i]] <- res[[i]][-j]
+      
+    }
+    
+  }
+  
+  res <- res[sapply(res, length)>0]
+
+  return(res)
+  
+}
+
 
 #######################################################################################
 ### getComponents function
@@ -772,7 +801,7 @@ interpret.random <- function(frla)
 ### makeBackward function
 ### purpose:  
 
-makeBackward <- function(comps, keep, allowCorrelationSel)
+makeBackward <- function(comps, keep, allowCorrelationSel, allowNoIntercept)
 {
   
   # comps   list created by getComponents
@@ -781,7 +810,8 @@ makeBackward <- function(comps, keep, allowCorrelationSel)
   
   returnListRE <- if(!is.null(comps$random)) 
     backwardStep(comps$random, keep=keep$random, 
-                 allowCorrelationSel=allowCorrelationSel)
+                 allowCorrelationSel=allowCorrelationSel,
+                 allowNoIntercept=allowNoIntercept)
   
   returnListS <- if(!is.null(comps$gamPart) && comps$gamPart$fake.formula[[3]]!=1) 
     backwardGam(comps$gamPart, keep=keep$fixed)
