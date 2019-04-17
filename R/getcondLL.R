@@ -4,6 +4,7 @@
 #' \code{\link[lme4]{lmer}} or \code{\link[lme4]{glmer}} of the 'lme4' package.
 #' 
 #' @return conditional log-likelihood value
+#' @importFrom stats weights
 #' @export
 getcondLL <-
 function(object) {
@@ -15,6 +16,14 @@ function(object) {
   # Returns:
   #   cll    = The conditional log-likelihood.
   #
+  
+  # check for weights
+  w <- weights(object)
+  if(sum(w)!=length(w)){
+    if(family(object)$family != "gaussian") 
+      warning("Weights for family != gaussian not implemented yet.")
+  }
+  
   switch(family(object)$family,
     binomial = {
       cll <- sum(dbinom(x    = getME(object, "y"), 
@@ -28,7 +37,7 @@ function(object) {
     gaussian = {
       cll <- sum(dnorm(x    = getME(object, "y"), 
                        mean = getME(object, "mu"), 
-                       sd   = sigma(object), log = TRUE))
+                       sd   = sigma(object) / sqrt(w), log = TRUE))
     },
     {
       cat("For this family no bias correction is currently available \n")
