@@ -1,12 +1,11 @@
 calculateGaussianBc <-
-function(model, sigma.estimated, analytic) {
+function(model, sigma.penalty, analytic) {
   # A function that calculates the analytic representation of the bias 
   # corrections in linear mixed models, see Greven & Kneib (2010).
   #
   # Args: 
   #   model    = From getAllModelComponents()
-  #   sigma.estimated = If sigma is estimated. This only is used for the 
-  #                     analytical version of Gaussian responses.
+  #   sigma.penalty = Number of estimated variance components in the residual error covariance
   #   analytic = FALSE if the numeric hessian of the (restricted) marginal log-
   #              likelihood from the lmer optimization procedure should be used.
   #              Otherwise (default) TRUE, i.e. use a analytical version that 
@@ -19,6 +18,12 @@ function(model, sigma.estimated, analytic) {
   B     <- model$B
   e     <- model$e
   A     <- model$A
+  if(!is.null(model$R)){
+    RA <- model$R%*%A
+  }else{
+    RA <- A
+  }
+
   tye   <- model$tye
   V0inv <- model$V0inv
    
@@ -67,7 +72,7 @@ function(model, sigma.estimated, analytic) {
   
   Lambday <- try(solve(B) %*% C)
   
-  if(class(Lambday)=="try-error"){  
+  if(class(Lambday)[1]=="try-error"){  
   
     Rchol   <- try(chol(B))
     L1      <- backsolve(Rchol, C, transpose = TRUE)
@@ -75,13 +80,13 @@ function(model, sigma.estimated, analytic) {
     
   }
   
-  df <- model$n - sum(diag(A))
+  df <- model$n - sum(diag(RA))
   for (j in 1:length(model$theta)) {
-      df <- df + sum(Lambday[j,] %*% (A %*% (model$Wlist[[j]] %*% e)))  
+      df <- df + sum(Lambday[j,] %*% (RA %*% (model$Wlist[[j]] %*% e)))  
   }
   
-  if (sigma.estimated) {
-    df <- df + 1
+  if (sigma.penalty) {
+    df <- df + sigma.penalty
   }
   
   return(df)

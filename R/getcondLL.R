@@ -6,7 +6,27 @@
 #' @return conditional log-likelihood value
 #' @importFrom stats weights
 #' @export
-getcondLL <-
+getcondLL <- function(object) UseMethod("getcondLL")
+
+#' @return \code{NULL}
+#'
+#' @rdname getcondLL
+#' @importFrom nlme getResponse
+#' @export 
+getcondLL.lme <-
+  function(object) {
+    stopifnot(family(object)$family == "gaussian")
+    y <- as.vector(getResponse(object))
+    y_hat <- predict(object) # re at their predicted values
+    R <- as.matrix(get_R(object))
+    sum(mvtnorm::dmvnorm(x = y, mean = y_hat, sigma = R, log = TRUE))
+  }
+
+#' @return \code{NULL}
+#'
+#' @rdname getcondLL
+#' @export 
+getcondLL.merMod <-
 function(object) {
   # A function that calls the bias correction functions.
   #
