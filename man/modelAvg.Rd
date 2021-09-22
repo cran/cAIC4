@@ -11,18 +11,18 @@ modelAvg(models, opt = TRUE)
 \code{\link[lme4]{lmer}} of the lme4-package or of class
 \code{\link[nlme]{lme}}.}
 
-\item{opt}{logical. If TRUE (the default) the model averaging approach
-with optimial weights is calculated. If FALSE the underlying weights as smoothed weights
-as proposed by Buckland et al. (1997)}
+\item{opt}{logical. If TRUE (the default) the model averaging approach based 
+on Zhang et al. is applied. If FALSE the underlying weights are calculated 
+as smoothed weights as proposed by Buckland et al. (1997).}
 }
 \value{
 An object containing the function calls of the underlying candidate models,
-the values of the model averaged fixed effects, the values of the model averaged random effects
-the results of the weight optimization process, as well as a list of the candidate models themselvs
+the values of the model averaged fixed effects, the values of the model averaged random effects,
+the results of the weight optimization process, as well as a list of the candidate models themselves.
 }
 \description{
-Function to perform Model Averaging for Linear Mixed Models based
-on the weight selection criterion Model Averaging as proposed by Zhang et al.(2014)
+Function to perform model averaging for linear mixed models based
+on the weight selection criterion as proposed by Zhang et al. (2014).
 }
 \examples{
 data(Orthodont, package = "nlme")

@@ -15,7 +15,8 @@ summaryMA(object, randeff = FALSE)
 Outputs a summary of the model averaged random and fixed effects, as well as the calculated weights of the individual candidate models.
 }
 \description{
-Function to generate a summary of the results of the model averaging process.
+summaryMA is a function used to produce result summaries of the model 
+averaging approach.
 }
 \examples{
 data(Orthodont, package = "nlme")

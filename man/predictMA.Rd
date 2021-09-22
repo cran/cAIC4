@@ -9,10 +9,12 @@ predictMA(object, new.data)
 \arguments{
 \item{object}{A object created by the model averaging function.}
 
-\item{new.data}{Object that contains the data on which the prediction is to be based on.}
+\item{new.data}{Object that contains the data on which the prediction 
+is to be based on.}
 }
 \value{
-An object that containing predictions that are calculated on the basis of dataset and the underlying averaged model.
+An object that contains predictions calculated based on the given 
+dataset and the assumed underlying model average.
 }
 \description{
 Function to perform prediction for model averaged linear mixed models based

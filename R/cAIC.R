@@ -99,9 +99,9 @@
 #' @seealso \code{\link[lme4]{lme4-package}}, \code{\link[lme4]{lmer}},
 #' \code{\link[lme4]{glmer}}
 #' @references 
-#' Saefken, B., Ruegamer, D., Kneib, T. and Greven, S. (2018):
+#' Saefken, B., Ruegamer, D., Kneib, T. and Greven, S. (2021):
 #' Conditional Model Selection in Mixed-Effects Models with cAIC4.
-#' \url{https://arxiv.org/abs/1803.05664}
+#' <doi:10.18637/jss.v099.i08>
 #' 
 #' Saefken, B., Kneib T., van Waveren C.-S. and Greven, S. (2014) A
 #' unifying approach to the estimation of the conditional Akaike information in
@@ -116,7 +116,7 @@
 #' @keywords regression
 #' @export
 #' @import lme4 Matrix methods RLRsim mvtnorm
-#' @importFrom stats terms.formula
+#' @importFrom stats terms.formula na.omit
 #' @importFrom stats gaussian printCoefmat residuals
 #' @importFrom utils capture.output
 #' @rawNamespace 
@@ -201,11 +201,15 @@ function(object, method = NULL, B = NULL, sigma.penalty = 1, analytic = TRUE) {
     
     y <- object$y
 
-    if(is.null(y)) y <- eval(object$call$data, 
-                             environment(formula(object)))[
-                               all.vars(formula(object))[1]][[1]]
-    if(is.null(y)) stop("Please specify the data argument in the initial model call!")
-        
+    if(is.null(y)) y <- with(eval(object$call$data, 
+                                  environment(formula(object))),
+                             eval(formula(object)[[2]]))
+    
+    if(is.null(y)) 
+      stop("Please specify the data argument in the initial model call!")
+   
+    # remove NAs
+    y <- na.omit(y)
     n <- length(y)
     
     mu <- predict(object,type="response")

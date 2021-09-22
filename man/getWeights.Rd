@@ -12,19 +12,20 @@ getWeights(models)
 \code{\link[nlme]{lme}}.}
 }
 \value{
-An updated object containing a vector of weights for the underlying candidate models, value
-of the object given said weights as well as the time needed.
+An object containing a vector of optimized weights, 
+value of the minimized target function and the duration of the optimization 
+process.
 }
 \description{
-Function to constructed an optimal vector of weights for model averaging of
-Linear Mixed Models based on the proposal of Zhang et al. (2014) of using Stein's Formular
-to derive a suitable criterion based on the conditional Akaike Information Criterion as
-proposed by Greven and Kneib. The underlying optimization used is a customized version
-of the Augmented Lagrangian Method.
+Function to determine optimal weights for model averaging based on a proposal 
+by Zhang et al. ( 2014) to derive a weight choice criterion based on the 
+conditional Akaike Information Criterion as proposed by Greven and Kneib 
+(2010). The underlying optimization is a customized version of the 
+Augmented Lagrangian Method.
 }
 \section{WARNINGS }{
- For models called via \code{gamm4} or \code{gamm}
-no weight determination via this function is currently possible.
+ 
+No weight-determination is currently possible for models called via \code{gamm4}.
 }
 
 \examples{
