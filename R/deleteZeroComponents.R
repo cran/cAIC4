@@ -5,7 +5,7 @@
 #' from the call if corresponding variance parameter is estimated to zero and
 #' updates the model in \code{\link[lme4]{merMod}}.
 #' 
-#' For \code{\link{merMod}} class models:
+#' For \code{\link[lme4]{merMod}} class models:
 #' Uses the \code{cnms} slot of \code{m} and the relative covariance factors to
 #' rewrite the random effects part of the formula, reduced by those parameters
 #' that have an optimum on the boundary. This is necessary to obtain the true
@@ -26,7 +26,7 @@
 #' @section WARNINGS : For models called via \code{gamm4} or \code{gamm} 
 #' no automated update is available. 
 #' Instead a warning with terms to omit from the model is returned.
-#' @author Benjamin Saefken \& David Ruegamer \& Philipp Baumann
+#' @author Benjamin Saefken, David Ruegamer, Philipp Baumann
 #' @seealso \code{\link[lme4]{lme4-package}}, \code{\link[lme4]{lmer}},
 #' \code{\link[lme4]{getME}}
 #' @references Greven, S. and Kneib T. (2010) On the behaviour of marginal and

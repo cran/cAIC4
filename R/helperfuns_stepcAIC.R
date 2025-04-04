@@ -241,7 +241,7 @@ calculateAllCAICs <- function(newSetup,
     #   
     # }else{
     
-    if(length(class(m))==1 && class(m)=="list"){ # m is a gamm4 object
+    if(length(class(m))==1 && inherits(m,"list")){ # m is a gamm4 object
       
       tryCatch(cAIC(m,...)[c("loglikelihood","df","caic", "new")], 
                error = function(e){ 
@@ -643,7 +643,8 @@ removeUncor <- function(res)
 removeNoInt <- function(res)
 {
   
-  hasInt = function(x) grepl("(Intercept)",x,fixed=TRUE)
+  # check if any of the results is an intercept
+  hasInt = function(x) any(grepl("(Intercept)",x,fixed=TRUE))
   
   for(i in 1:length(res)){
     

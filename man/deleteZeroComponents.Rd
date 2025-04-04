@@ -32,7 +32,7 @@ from the call if corresponding variance parameter is estimated to zero and
 updates the model in \code{\link[lme4]{merMod}}.
 }
 \details{
-For \code{\link{merMod}} class models:
+For \code{\link[lme4]{merMod}} class models:
 Uses the \code{cnms} slot of \code{m} and the relative covariance factors to
 rewrite the random effects part of the formula, reduced by those parameters
 that have an optimum on the boundary. This is necessary to obtain the true
@@ -67,6 +67,6 @@ conditional AIC in linear mixed models. Biometrika 97(4), 773-789.
 \code{\link[lme4]{getME}}
 }
 \author{
-Benjamin Saefken \& David Ruegamer \& Philipp Baumann
+Benjamin Saefken, David Ruegamer, Philipp Baumann
 }
 \keyword{regression}

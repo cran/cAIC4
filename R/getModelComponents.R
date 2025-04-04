@@ -1,5 +1,24 @@
+#' Generic getModelComponents method
+#' 
+#' @export 
+#' @param m model object
+#' @param analytic logical
+#' 
+#' @return Model components
+#' 
+#' 
 getModelComponents <- function(m, analytic) UseMethod("getModelComponents")
 
+#' getModelComponents for lme objects
+#' 
+#' @exportS3Method getModelComponents lme
+#' 
+#' @param m lme object
+#' @param analytic logical
+#' 
+#' @return Model components
+#' 
+#' 
 getModelComponents.lme <-
   function(m, analytic = TRUE) {
     model <- list()
@@ -72,6 +91,13 @@ getModelComponents.lme <-
     return(model)
   }
 
+#' getModelComponents for merMods
+#' 
+#' @exportS3Method getModelComponents merMod
+#' 
+#' @param m merMod object
+#' @param analytic logical
+#' 
 getModelComponents.merMod <-
 function(m, analytic) { 
   # A function that calculates all components needed to calculate the bias

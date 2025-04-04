@@ -19,7 +19,7 @@
 #' \code{"steinian"} for analytical representations based on Stein type
 #' formulas. The default is \code{NULL}. In this case the method is choosen
 #' automatically based on the \code{family} argument of the
-#' \code{(g)lmer}-object. For \code{"gaussian"} and \code{"poisson"} this is
+#' \code{(g)lmer}-object. For \code{"gaussian"}, \code{"poisson"} and \code{"binomial"} (in the Bernoulli case, i.e. only two outcomes) this is
 #' the Steinian type estimator, for all others it is the conditional Bootstrap.
 #' For models from the nlme package, only \code{\link[nlme]{lme}} objects, i.e.,
 #' with gaussian response are supported.
@@ -119,6 +119,7 @@
 #' @importFrom stats terms.formula na.omit
 #' @importFrom stats gaussian printCoefmat residuals
 #' @importFrom utils capture.output
+#' @importFrom stats family
 #' @rawNamespace 
 #' if(getRversion() >= "3.3.0") {
 #' importFrom("stats", sigma)
@@ -243,7 +244,7 @@ function(object, method = NULL, B = NULL, sigma.penalty = 1, analytic = TRUE) {
     stop("Class of object is not supported.")
   }
   
-  if (class(object) != "lme" && 
+  if (!inherits(object, "lme") && 
       family(object)$family == "binomial" && 
       length(unique(getME(object, "y"))) > 2) {
     warning("Method not yet supplied for binomial data with n larger 2. 

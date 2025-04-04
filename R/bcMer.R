@@ -16,7 +16,7 @@ function(object, method = NULL, B = NULL, sigma.penalty = 1, analytic = TRUE) {
   # Returns:
   #   bc = Bias correction for a mixed model.
   #
-  if (is.null(method) | class(object) == "lme") {
+  if (is.null(method) | inherits(object, "lme")) {
     switch(family(object)$family,
           binomial = {
             bc <- biasCorrectionBernoulli(object)

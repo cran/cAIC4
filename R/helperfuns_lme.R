@@ -1,5 +1,9 @@
-# family function for lme objects to have a generic function
-# also working for lme models
+#' family function for lme objects to have a generic function
+#' @exportS3Method family lme
+#' @param object lme object
+#' @param ... unused
+#' @return returns a Gaussian distribution
+#' 
 family.lme <- function(object, ...) gaussian()
 
 sort_sterms <- function(m) {
